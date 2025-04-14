@@ -1,0 +1,139 @@
+{% extends 'users/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Face ID Login</h3>
+            </div>
+            <div class="card-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    
+                    <div class="camera-container mb-3">
+                        <video id="video" autoplay playsinline></video>
+                        <div class="camera-overlay">Please look straight at the camera</div>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary" id="captureBtn">Capture Photo</button>
+                        <button type="submit" class="btn btn-success" id="submitBtn" disabled>Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Login Error</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let captureBtn = document.getElementById('captureBtn');
+let submitBtn = document.getElementById('submitBtn');
+let faceImage = null;
+let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+
+// Access the camera
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+    })
+    .catch(err => {
+        console.error('Error accessing camera:', err);
+        showError('Error accessing camera. Please make sure you have granted camera permissions.');
+    });
+
+// Capture photo
+captureBtn.addEventListener('click', () => {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    faceImage = canvas.toDataURL('image/jpeg');
+    submitBtn.disabled = false;
+    captureBtn.textContent = 'Retake Photo';
+});
+
+// Handle form submission
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!faceImage) {
+        showError('Please capture a photo first');
+        return;
+    }
+
+    const formData = {
+        username: document.getElementById('username').value,
+        face_image: faceImage
+    };
+
+    try {
+        const response = await fetch('/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            window.location.href = '/dashboard/';
+        } else {
+            showError(data.error || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('An error occurred during login');
+    }
+});
+
+function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    errorModal.show();
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

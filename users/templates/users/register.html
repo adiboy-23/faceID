@@ -1,0 +1,195 @@
+{% extends 'users/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Register</h3>
+            </div>
+            <div class="card-body">
+                <form id="registrationForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="passport_number" class="form-label">Passport Number</label>
+                            <input type="text" class="form-control" id="passport_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="date_of_birth" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="hotel_name" class="form-label">Hotel Name</label>
+                            <input type="text" class="form-control" id="hotel_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="room_number" class="form-label">Room Number</label>
+                            <input type="text" class="form-control" id="room_number" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="check_in_date" class="form-label">Check-in Date</label>
+                            <input type="date" class="form-control" id="check_in_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="check_out_date" class="form-label">Check-out Date</label>
+                            <input type="date" class="form-control" id="check_out_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-container mb-3">
+                        <video id="video" autoplay playsinline></video>
+                        <div class="camera-overlay">Please look straight at the camera</div>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary" id="captureBtn">Capture Photo</button>
+                        <button type="submit" class="btn btn-success" id="submitBtn" disabled>Register</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let captureBtn = document.getElementById('captureBtn');
+let submitBtn = document.getElementById('submitBtn');
+let faceImage = null;
+
+// Access the camera
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+    })
+    .catch(err => {
+        console.error('Error accessing camera:', err);
+        alert('Error accessing camera. Please make sure you have granted camera permissions.');
+    });
+
+// Capture photo
+captureBtn.addEventListener('click', () => {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    faceImage = canvas.toDataURL('image/jpeg');
+    submitBtn.disabled = false;
+    captureBtn.textContent = 'Retake Photo';
+});
+
+// Handle form submission
+document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!faceImage) {
+        alert('Please capture a photo first');
+        return;
+    }
+
+    // Validate form fields
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const first_name = document.getElementById('first_name').value;
+    const last_name = document.getElementById('last_name').value;
+    const passport_number = document.getElementById('passport_number').value;
+    const date_of_birth = document.getElementById('date_of_birth').value;
+    const hotel_name = document.getElementById('hotel_name').value;
+    const room_number = document.getElementById('room_number').value;
+    const check_in_date = document.getElementById('check_in_date').value;
+    const check_out_date = document.getElementById('check_out_date').value;
+
+    // Check if any required field is empty
+    if (!username || !password || !first_name || !last_name || !passport_number || 
+        !date_of_birth || !hotel_name || !room_number || !check_in_date || !check_out_date) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    const formData = {
+        username: username,
+        password: password,
+        first_name: first_name,
+        last_name: last_name,
+        passport_number: passport_number,
+        date_of_birth: date_of_birth,
+        hotel_name: hotel_name,
+        room_number: room_number,
+        check_in_date: check_in_date,
+        check_out_date: check_out_date,
+        face_image: faceImage
+    };
+
+    console.log('Submitting registration form...');
+    console.log('Form data:', Object.keys(formData));
+
+    try {
+        const response = await fetch('/register/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (response.ok) {
+            alert('Registration successful! Please login.');
+            window.location.href = '/login/';
+        } else {
+            alert(data.error || 'Registration failed');
+        }
+    } catch (error) {
+        console.error('Error during registration:', error);
+        alert('An error occurred during registration: ' + error.message);
+    }
+});
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 
