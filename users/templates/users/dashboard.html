@@ -8,50 +8,53 @@
                 <h3 class="text-center">Welcome, {{ user.get_full_name }}</h3>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        <img src="{{ profile.face_image.url }}" alt="Profile Photo" class="img-fluid rounded-circle mb-3" style="max-width: 200px;">
-                        <h4>{{ user.username }}</h4>
+                <form id="dashboardForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <img src="{{ profile.face_image.url }}" alt="Profile Photo" class="img-fluid rounded-circle mb-3" style="max-width: 200px;">
+                            <h4>{{ user.username }}</h4>
+                        </div>
+                        <div class="col-md-8">
+                            <h5 class="mb-3">Booking Information</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Full Name:</th>
+                                    <td>{{ user.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Passport Number:</th>
+                                    <td>{{ profile.passport_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Date of Birth:</th>
+                                    <td>{{ profile.date_of_birth }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Hotel Name:</th>
+                                    <td>{{ profile.hotel_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Room Number:</th>
+                                    <td>{{ profile.room_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Check-in Date:</th>
+                                    <td>{{ profile.check_in_date }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Check-out Date:</th>
+                                    <td>{{ profile.check_out_date }}</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
-                    <div class="col-md-8">
-                        <h5 class="mb-3">Booking Information</h5>
-                        <table class="table">
-                            <tr>
-                                <th>Full Name:</th>
-                                <td>{{ user.get_full_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>Passport Number:</th>
-                                <td>{{ profile.passport_number }}</td>
-                            </tr>
-                            <tr>
-                                <th>Date of Birth:</th>
-                                <td>{{ profile.date_of_birth }}</td>
-                            </tr>
-                            <tr>
-                                <th>Hotel Name:</th>
-                                <td>{{ profile.hotel_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>Room Number:</th>
-                                <td>{{ profile.room_number }}</td>
-                            </tr>
-                            <tr>
-                                <th>Check-in Date:</th>
-                                <td>{{ profile.check_in_date }}</td>
-                            </tr>
-                            <tr>
-                                <th>Check-out Date:</th>
-                                <td>{{ profile.check_out_date }}</td>
-                            </tr>
-                        </table>
+                    
+                    <div class="text-center mt-4">
+                        <button type="button" class="btn btn-primary me-2" id="logoutBtn">Logout</button>
+                        <button type="button" class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
                     </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <button class="btn btn-primary me-2" id="logoutBtn">Logout</button>
-                    <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -94,7 +97,7 @@ logoutBtn.addEventListener('click', async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         });
 
@@ -116,7 +119,7 @@ confirmDeleteBtn.addEventListener('click', async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         });
 
@@ -131,20 +134,5 @@ confirmDeleteBtn.addEventListener('click', async () => {
         alert('Error deleting account');
     }
 });
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
 </script>
 {% endblock %} 
