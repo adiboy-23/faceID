@@ -22,7 +22,7 @@ A Django web application that implements facial recognition for user authenticat
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/adiboy-23/faceID.git
 cd FaceIDLoginSystem
 ```
 
