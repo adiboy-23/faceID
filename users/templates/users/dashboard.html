@@ -49,6 +49,7 @@
                 </div>
                 
                 <div class="text-center mt-4">
+                    <button class="btn btn-primary me-2" id="logoutBtn">Logout</button>
                     <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
                 </div>
             </div>
@@ -81,9 +82,32 @@
 const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
 const deleteAccountBtn = document.getElementById('deleteAccountBtn');
 const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 
 deleteAccountBtn.addEventListener('click', () => {
     deleteModal.show();
+});
+
+logoutBtn.addEventListener('click', async () => {
+    try {
+        const response = await fetch('/logout/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            window.location.href = '/login/';
+        } else {
+            alert(data.error || 'Error logging out');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error logging out');
+    }
 });
 
 confirmDeleteBtn.addEventListener('click', async () => {
@@ -97,15 +121,14 @@ confirmDeleteBtn.addEventListener('click', async () => {
         });
 
         const data = await response.json();
-        
         if (response.ok) {
             window.location.href = '/login/';
         } else {
-            alert(data.error || 'Failed to delete account');
+            alert(data.error || 'Error deleting account');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while deleting the account');
+        alert('Error deleting account');
     }
 });
 
